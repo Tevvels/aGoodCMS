@@ -1,6 +1,6 @@
 const mysql = require('mysql');
 const inquirer = require('inquirer');
-const { choices } = require('yargs');
+
 
 const connection = mysql.createConnection({
     host:'localhost',
@@ -222,7 +222,7 @@ function employeeChoices(){
             addEmployee()
             break;
             case'update employee role':
-            update()
+            updateEmployee()
             break;
             case'remove an employee':
             deleteEmployee();
@@ -263,6 +263,38 @@ function addEmployee(){
          ]).then((response)=>{
              create('employee',response.firstname,response.lastname,parseInt(response.role),response.manager)
          })
+    })
+}
+
+function updateEmployee(){
+connection.query(`SELECT * FROM employee`,(err,data)=>{
+    if(err) throw err;
+    employees = data.map(({first_name})=>({
+        name:first_name,
+       
+
+    }))
+    inquirer.prompt([
+        {
+            type:'rawlist',
+            message:'which employee',
+            choices:employees,
+            name:'newrole'
+        }
+    ]).then((response) =>{
+        who = response.newrole
+    
+
+    inquirer.prompt([
+        {
+            message:'a new role',
+            name:'role'
+        }
+
+        ]).then((response)=>{
+            update('employee',response.role,who);
+        })
+    })
     })
 }
 
@@ -324,7 +356,6 @@ const create = (where,...what) =>{
 
 }
 
-
 const read = (where) =>{
     connection.query(`SELECT * FROM  ${where}`, (err,data)=>{
         if (err) throw err;
@@ -335,21 +366,22 @@ const read = (where) =>{
     })
 }
 
-const updata = () => {
-    const query = connection.query("UPDATE   SET ? WHERE ?",
+const update = (table,what,where) => {
+    const query = connection.query(`UPDATE ${table} SET ? WHERE ?`,
         [
             {
-                //SET
+                role_id: `${what}`
 
             },
             {
-                //WHERE
+                first_name: `${where}`
             
             }
         ],
         (err,data)=>{
             if(err) throw err;
             console.log("update")
+            Employment();
         }
     );
     
