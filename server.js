@@ -31,10 +31,9 @@ function Employment(){
            roleChoices();
             break;
             case'employee':
-            //function for employee
+            employeeChoices();
             break;
             case'done':
-            //function for employee
             connection.end();
             break;
 
@@ -73,7 +72,6 @@ function departmentChoices(){
 
     })
 }
-
 
 
 function addDepartment(){
@@ -206,6 +204,90 @@ function deleteRole(){
 
 }
 
+function employeeChoices(){
+    inquirer.prompt([
+        {
+            type:'list',
+            message:'would you like do',
+            choices: ['view employees','add an employee','update employee role','remove an employee','go back'],
+            name:'employeeChoices'
+        }
+    
+    ]).then((response) =>{
+        switch(response.employeeChoices){
+            case'view employees':
+            read('employee');
+            break;
+            case'add an employee':
+            addEmployee()
+            break;
+            case'update employee role':
+            update()
+            break;
+            case'remove an employee':
+            deleteEmployee();
+            break;
+            case'go back':
+            Employment();
+            break;
+        }
+    })
+}
+
+function addEmployee(){
+    connection.query(`SELECT * FROM roles`,(err,data)=>{
+        if(err) throw err;
+        empid = data.map(({id,title})=>({
+            name:title,
+            value:id
+        }))
+        inquirer.prompt([
+            {
+                message:"what is the employee's first name",
+                name:'firstname'
+            },
+            {
+                message:"what is the employee's last name",
+                name:'lastname'
+            },
+            {
+                type:'rawlist',
+                message:"what role are they in",
+                choices:empid,
+                name:'role'
+            },
+            {
+                message:"who is there manager",
+                name:'manager'
+            }
+         ]).then((response)=>{
+             create('employee',response.firstname,response.lastname,parseInt(response.role),response.manager)
+         })
+    })
+}
+
+function deleteEmployee(){
+    connection.query(`SELECT * FROM employee`,(err,data)=>{
+        if(err) throw err;
+        emparray = []
+        data.forEach(id => {
+            emparray.push(id.first_name)
+        })
+        console.log(emparray);
+        inquirer.prompt([
+            {
+                type:'rawlist',
+                message:'which employee do you wanna remove',
+                choices:emparray,
+                name:'employeedeletion'
+            }
+        ]).then((response)=>{
+            console.log(response);
+            delet('employee',response.employeedeletion);
+            Employment();
+        })
+    })
+}
 
 const create = (where,...what) =>{
    
@@ -218,6 +300,14 @@ const create = (where,...what) =>{
         whats = {title:what[0],
                 salary:what[1],
                 department_id:what[2],
+
+        };
+        break;
+        case 'employee':
+        whats = {first_name:what[0],
+                last_name:what[1],
+                role_id:what[2],
+                manager_id:what[3]
 
         };
         break;
@@ -280,7 +370,13 @@ const delet = (where,data) =>{
                 title:`${data}`
             }
 
-
+        }
+        else if(where == 'employee')
+        {
+            
+            deletewhat = {
+                first_name:`${data}`
+            }
 
         }
     }
@@ -290,6 +386,8 @@ const delet = (where,data) =>{
         (err,data) =>{
             if(err) throw err,
             console.log('delete')
+        console.log(where,deletewhat)
+
         }
 
     )
